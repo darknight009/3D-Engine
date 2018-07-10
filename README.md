@@ -1,2 +1,2 @@
 # MusicVisualizer
-Musik visualizer based using Babylon.js
+Musik visualizer using Babylon.js

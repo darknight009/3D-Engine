@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>3D Soft Engine using HTML5 Canvas</title>
+    <script src="p5.js"></script>
+    <script src="p5.sound.js"></script>
+    <script src="babylon.math.js"></script>
+    <script>
+        var song, analyzer;
+        function preload() {
+          song = loadSound('1.mp3');
+        }
+
+        function setup() {
+          song.loop();
+          analyzer = new p5.Amplitude();
+          analyzer.setInput(song);
+          init();
+        }
+
+        var SoftEngine;
+        (function (SoftEngine) {
+            var Camera = (function () {
+            function Camera() {
+                this.Position = BABYLON.Vector3.Zero();
+                this.Target = BABYLON.Vector3.Zero();
+                }
+            return Camera;
+            })();
+        SoftEngine.Camera = Camera;   
+        var Mesh = (function () {
+            function Mesh(name, verticesCount) {
+                this.name = name;
+                this.Vertices = new Array(verticesCount);
+                this.Rotation = BABYLON.Vector3.Zero();
+                this.Position = BABYLON.Vector3.Zero();
+            }
+            return Mesh;
+            })();
+        SoftEngine.Mesh = Mesh;   
+            var Device = (function () {
+                function Device(canvas) {
+                    this.workingCanvas = canvas;
+                    this.workingWidth = canvas.width;
+                    this.workingHeight = canvas.height;
+                    this.workingContext = this.workingCanvas.getContext("2d");
+                }
+                Device.prototype.clear = function () {
+                    this.workingContext.clearRect(0, 0, this.workingWidth, this.workingHeight);
+                    this.backbuffer = this.workingContext.getImageData(0, 0, this.workingWidth, this.workingHeight);
+                };
+                Device.prototype.present = function () {
+                    this.workingContext.putImageData(this.backbuffer, 0, 0);
+                };
+                Device.prototype.putPixel = function (x, y, color) {
+                    this.backbufferdata = this.backbuffer.data;
+                    var index = ((x >> 0) + (y >> 0) * this.workingWidth) * 4;
+                    this.backbufferdata[index] = color.r * 255;
+                    this.backbufferdata[index + 1] = color.g * 255;
+                    this.backbufferdata[index + 2] = color.b * 255;
+                    this.backbufferdata[index + 3] = color.a * 255;
+                };
+                Device.prototype.project = function (coord, transMat) {
+                    var point = BABYLON.Vector3.TransformCoordinates(coord, transMat);
+                    var x = point.x * this.workingWidth + this.workingWidth / 2.0 >> 0;
+                    var y = -point.y * this.workingHeight + this.workingHeight / 2.0 >> 0;
+                    return (new BABYLON.Vector2(x, y));
+                };
+                Device.prototype.drawPoint = function (point) {
+                    if(point.x >= 0 && point.y >= 0 && point.x < this.workingWidth && point.y < this.workingHeight) {
+                        this.putPixel(point.x, point.y, new BABYLON.Color4(1, 1, 0, 0.5));
+                    }
+                };
+                Device.prototype.render = function (camera, meshes) {
+                    var viewMatrix = BABYLON.Matrix.LookAtLH(camera.Position, camera.Target, BABYLON.Vector3.Up());
+                    var projectionMatrix = BABYLON.Matrix.PerspectiveFovLH(0.78, this.workingWidth / this.workingHeight, 0.01, 1.0);
+                    for(var index = 0; index < meshes.length; index++) {
+                        var cMesh = meshes[index];
+                        var worldMatrix = BABYLON.Matrix.RotationYawPitchRoll(cMesh.Rotation.y, cMesh.Rotation.x, cMesh.Rotation.z).multiply(BABYLON.Matrix.Translation(cMesh.Position.x, cMesh.Position.y, cMesh.Position.z));
+                        var transformMatrix = worldMatrix.multiply(viewMatrix).multiply(projectionMatrix);
+                        for(var indexVertices = 0; indexVertices < cMesh.Vertices.length; indexVertices++) {
+                            var point0 = this.project(cMesh.Vertices[indexVertices], transformMatrix);
+                            this.drawPoint(point0);
+                        }
+                    }
+                };
+
+                Device.prototype.drawLine = function(p0, p1){
+                    var dist= p1.subtract(p0).length();
+                    if (dist<2){return;}
+                    var md=p0.add((p1.subtract(p0)).scale(0.5));
+                    this.drawPoint(md);
+                    this.drawLine(p0,md);
+                    this.drawLine(md,p1);
+                };
+
+                return Device;
+            })();
+            SoftEngine.Device = Device;
+        })(SoftEngine={});
+
+        var canvas;
+        var meshes;
+        var mesh;
+        var device;
+        var cam;
+        document.addEventListener("DOMContentLoaded", preload, false);
+
+        function init(){
+            analyzer = new p5.Amplitude();
+            analyzer.setInput(song);
+            canvas = document.getElementById("frontBuffer");
+            canvas.width= window.innerWidth;
+            canvas.height=window.innerHeight;
+            device = new SoftEngine.Device(canvas);
+            meshes = [];
+            cam = new SoftEngine.Camera();
+            mesh = new SoftEngine.Mesh("Sphere", 24);
+            var k=0;
+            for(var i=0; i<2*3.1; i=i+0.2){
+                for(var j=0; j<3.1; j+=0.2){
+                    mesh.Vertices[k] = new BABYLON.Vector3(1.5*Math.cos(i)*Math.sin(j), 1.5*Math.sin(i)*Math.sin(j), 1.5*Math.cos(j));
+                    k+=1;
+                }
+            }
+            meshes.push(mesh)
+
+            cam.Position = new BABYLON.Vector3(0, 0, 20);
+            cam.Target = new BABYLON.Vector3(0, 0, 0);
+            requestAnimationFrame(drawingLoop);
+        }
+
+        function drawingLoop() {
+            var rms = analyzer.getLevel();
+            device.clear();
+            mesh.Rotation.y += rms/5;
+            if(rms>0.2){
+                mesh.Position.z+=rms/2;
+            }
+            else{
+                if(mesh.Position.z>=0){
+                    mesh.Position.z-=1;
+                }
+            }
+            device.render(cam, meshes);
+            device.present();
+            requestAnimationFrame(drawingLoop);
+        }
+    </script>
+</head>
+<body>
+    <canvas id="frontBuffer" style="background-color: black;"></canvas>
+</body>
+</html>

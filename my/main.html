@@ -68,7 +68,7 @@
                 };
                 Device.prototype.drawPoint = function (point) {
                     if(point.x >= 0 && point.y >= 0 && point.x < this.workingWidth && point.y < this.workingHeight) {
-                        this.putPixel(point.x, point.y, new BABYLON.Color4(1, 1, 0, 0.5));
+                        this.putPixel(point.x, point.y, new BABYLON.Color4(1, 1, 1, 0.5));
                     }
                 };
                 Device.prototype.render = function (camera, meshes) {
@@ -117,8 +117,8 @@
             cam = new SoftEngine.Camera();
             mesh = new SoftEngine.Mesh("Sphere", 24);
             var k=0;
-            for(var i=0; i<2*3.14; i=i+0.1){
-                for(var j=0; j<3.14; j+=0.1){
+            for(var i=0; i<=2*3.14; i=i+0.157){
+                for(var j=0; j<=3.14; j+=0.157){
                     mesh.Vertices[k] = new BABYLON.Vector3(Math.cos(i)*Math.sin(j), Math.sin(i)*Math.sin(j), Math.cos(j));
                     k+=1;
                 }

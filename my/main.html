@@ -66,12 +66,12 @@
                     var y = -point.y * this.workingHeight + this.workingHeight / 2.0 >> 0;
                     return (new BABYLON.Vector2(x, y));
                 };
-                Device.prototype.drawPoint = function (point) {
+                Device.prototype.drawPoint = function (point, alpha) {
                     if(point.x >= 0 && point.y >= 0 && point.x < this.workingWidth && point.y < this.workingHeight) {
-                        this.putPixel(point.x, point.y, new BABYLON.Color4(1, 1, 1, 0.5));
+                        this.putPixel(point.x, point.y, new BABYLON.Color4(1, 1, 1, alpha));
                     }
                 };
-                Device.prototype.render = function (camera, meshes) {
+                Device.prototype.render = function (camera, meshes, alpha) {
                     var viewMatrix = BABYLON.Matrix.LookAtLH(camera.Position, camera.Target, BABYLON.Vector3.Up());
                     var projectionMatrix = BABYLON.Matrix.PerspectiveFovLH(0.78, this.workingWidth / this.workingHeight, 0.01, 1.0);
                     for(var index = 0; index < meshes.length; index++) {
@@ -80,7 +80,7 @@
                         var transformMatrix = worldMatrix.multiply(viewMatrix).multiply(projectionMatrix);
                         for(var indexVertices = 0; indexVertices < cMesh.Vertices.length; indexVertices++) {
                             var point0 = this.project(cMesh.Vertices[indexVertices], transformMatrix);
-                            this.drawPoint(point0);
+                            this.drawPoint(point0, alpha);
                         }
                     }
                 };
@@ -104,6 +104,7 @@
         var mesh;
         var device;
         var cam;
+        var rgbA=0;
         document.addEventListener("DOMContentLoaded", preload, false);
 
         function init(){
@@ -123,6 +124,7 @@
                     k+=1;
                 }
             }
+            mesh.Vertices[k] = new BABYLON.Vector3(0, 0, 0);
             meshes.push(mesh)
 
             cam.Position = new BABYLON.Vector3(0, 0, 25);
@@ -142,7 +144,8 @@
                     mesh.Position.z-=1.5;
                 }
             }
-            device.render(cam, meshes);
+            rgbA=1-2*rms;
+            device.render(cam, meshes, rgbA);
             device.present();
             requestAnimationFrame(drawingLoop);
         }

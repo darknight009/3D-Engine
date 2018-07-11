@@ -29,9 +29,9 @@
             })();
         SoftEngine.Camera = Camera;   
         var Mesh = (function () {
-            function Mesh(name, verticesCount) {
+            function Mesh(name) {
                 this.name = name;
-                this.Vertices = new Array(verticesCount);
+                this.Vertices = [];
                 this.Rotation = BABYLON.Vector3.Zero();
                 this.Position = BABYLON.Vector3.Zero();
             }
@@ -115,7 +115,7 @@
             device = new SoftEngine.Device(canvas);
             meshes = [];
             cam = new SoftEngine.Camera();
-            mesh = new SoftEngine.Mesh("Sphere", 24);
+            mesh = new SoftEngine.Mesh("Sphere");
             var k=0;
             for(var i=0; i<=2*3.14; i=i+0.157){
                 for(var j=0; j<=3.14; j+=0.157){

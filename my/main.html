@@ -78,18 +78,19 @@
                         var cMesh = meshes[index];
                         var worldMatrix = BABYLON.Matrix.RotationYawPitchRoll(cMesh.Rotation.y, cMesh.Rotation.x, cMesh.Rotation.z).multiply(BABYLON.Matrix.Translation(cMesh.Position.x, cMesh.Position.y, cMesh.Position.z));
                         var transformMatrix = worldMatrix.multiply(viewMatrix).multiply(projectionMatrix);
-                        for(var indexVertices = 0; indexVertices < cMesh.Vertices.length; indexVertices++) {
+                        for(var indexVertices = 0; indexVertices < cMesh.Vertices.length-1; indexVertices++) {
                             var point0 = this.project(cMesh.Vertices[indexVertices], transformMatrix);
                             this.drawPoint(point0, alpha);
+                            this.drawLine(point0, this.project(cMesh.Vertices[cMesh.Vertices.length-1], transformMatrix));
                         }
                     }
                 };
 
                 Device.prototype.drawLine = function(p0, p1){
                     var dist= p1.subtract(p0).length();
-                    if (dist<2){return;}
+                    if (dist<30){return;}
                     var md=p0.add((p1.subtract(p0)).scale(0.5));
-                    this.drawPoint(md);
+                    this.drawPoint(md, 0.1);
                     this.drawLine(p0,md);
                     this.drawLine(md,p1);
                 };

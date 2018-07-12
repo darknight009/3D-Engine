@@ -4,11 +4,13 @@
     <title>3D Soft Engine using HTML5 Canvas</title>
     <script src="p5.js"></script>
     <script src="p5.sound.js"></script>
+    <script src="p5.dom.js"></script>
     <script src="babylon.math.js"></script>
     <script>
         var song, analyzer;
-        function preload() {
-          song = loadSound('1.mp3');
+
+        function preload(){
+            song = loadSound("1.mp3");
         }
 
         function setup() {
@@ -66,12 +68,12 @@
                     var y = -point.y * this.workingHeight + this.workingHeight / 2.0 >> 0;
                     return (new BABYLON.Vector2(x, y));
                 };
-                Device.prototype.drawPoint = function (point, alpha) {
+                Device.prototype.drawPoint = function (point, color) {
                     if(point.x >= 0 && point.y >= 0 && point.x < this.workingWidth && point.y < this.workingHeight) {
-                        this.putPixel(point.x, point.y, new BABYLON.Color4(1, 1, 1, alpha));
+                        this.putPixel(point.x, point.y, color);
                     }
                 };
-                Device.prototype.render = function (camera, meshes, alpha) {
+                Device.prototype.render = function (camera, meshes, color) {
                     var viewMatrix = BABYLON.Matrix.LookAtLH(camera.Position, camera.Target, BABYLON.Vector3.Up());
                     var projectionMatrix = BABYLON.Matrix.PerspectiveFovLH(0.78, this.workingWidth / this.workingHeight, 0.01, 1.0);
                     for(var index = 0; index < meshes.length; index++) {
@@ -80,17 +82,17 @@
                         var transformMatrix = worldMatrix.multiply(viewMatrix).multiply(projectionMatrix);
                         for(var indexVertices = 0; indexVertices < cMesh.Vertices.length-1; indexVertices++) {
                             var point0 = this.project(cMesh.Vertices[indexVertices], transformMatrix);
-                            this.drawPoint(point0, alpha);
+                            this.drawPoint(point0, new BABYLON.Color4(1, 1, 1, 1));
                             this.drawLine(point0, this.project(cMesh.Vertices[cMesh.Vertices.length-1], transformMatrix));
                         }
                     }
                 };
 
-                Device.prototype.drawLine = function(p0, p1){
+                Device.prototype.drawLine = function(p0, p1, color){
                     var dist= p1.subtract(p0).length();
                     if (dist<30){return;}
                     var md=p0.add((p1.subtract(p0)).scale(0.5));
-                    this.drawPoint(md, 0.1);
+                    this.drawPoint(md, new BABYLON.Color4(1,0.75,0, 0.5));
                     this.drawLine(p0,md);
                     this.drawLine(md,p1);
                 };
@@ -105,8 +107,7 @@
         var mesh;
         var device;
         var cam;
-        var rgbA=0;
-        document.addEventListener("DOMContentLoaded", preload, false);
+        document.addEventListener("DOMContentLoaded", setup, false);
 
         function init(){
             analyzer = new p5.Amplitude();
@@ -145,8 +146,7 @@
                     mesh.Position.z-=1.5;
                 }
             }
-            rgbA=1-2*rms;
-            device.render(cam, meshes, rgbA);
+            device.render(cam, meshes, new BABYLON.Color4(1,1,1,1));
             device.present();
             requestAnimationFrame(drawingLoop);
         }

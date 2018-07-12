@@ -1,2 +1,5 @@
 # MusicVisualizer
-Musik visualizer using Babylon.js
+Music visualizer using Babylon.js
+
+![Alt Text](https://j.gifs.com/jqmmVY.gif)
+

@@ -82,7 +82,7 @@
                         var worldMatrix = BABYLON.Matrix.RotationYawPitchRoll(cMesh.Rotation.y, cMesh.Rotation.x, cMesh.Rotation.z).multiply(BABYLON.Matrix.Translation(cMesh.Position.x, cMesh.Position.y, cMesh.Position.z));
                         var transformMatrix = worldMatrix.multiply(viewMatrix).multiply(projectionMatrix);
 
-                        if (surf=="volume"){
+                        if (surf==="volume"){
                             for(var indexVertices = 0; indexVertices < cMesh.Vertices.length-1; indexVertices++) {
                                 var point0 = this.project(cMesh.Vertices[indexVertices], transformMatrix);
                                 this.drawPoint(point0, new BABYLON.Color4(1, 1, 1, 1));
@@ -90,7 +90,7 @@
                             }
                         }
 
-                        if (surf=="face"){
+                        if (surf==="faces"){
                             for (var indexFaces = 0; indexFaces < cMesh.Faces.length; indexFaces++)
                             {
                                 var currentFace = cMesh.Faces[indexFaces];
@@ -153,6 +153,7 @@
                     };
                     xmlhttp.send(null);
                 };
+
                 Device.prototype.CreateMeshesFromJSON = function (jsonObject) {
                     var meshes = [];
                     for(var meshIndex = 0; meshIndex < jsonObject.meshes.length; meshIndex++) {
@@ -258,7 +259,7 @@
 
             for (var i = 0; i < meshes.length; i++) {
                 meshes[i].Rotation.x += 0.01;
-                meshes[i].Rotation.y += 0.01;0
+                meshes[i].Rotation.y += 0.01;
             }
 
             device.render(cam, meshes, "faces");
@@ -268,6 +269,8 @@
 
         
         function drawVis() {
+            var rangeslider = document.getElementById("myRange");
+            song.amp(rangeslider.value/100);
             var rms = analyzer.getLevel();
             device.clear();
             mesh.Rotation.y += rms/5;
@@ -283,13 +286,20 @@
             device.present();
             requestAnimationFrame(drawVis);
         }
+
     </script>
 </head>
 <body>
     <div>
         <button onclick="initVizer()">Visualizer</button>
         <button onclick="initJSON()">Load JSON file</button>
+        <div class="slidecontainer">
+          <input type="range" min="1" max="100" value="50" class="slider" id="myRange">
+        </div>
     </div>
-    <canvas id="frontBuffer" style="background-color: black;"></canvas>
+    <div>
+        <canvas id="frontBuffer" style="background-color: black;">
+        </canvas>
+    </div>
 </body>
 </html>

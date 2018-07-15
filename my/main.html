@@ -47,21 +47,30 @@
                     this.workingWidth = canvas.width;
                     this.workingHeight = canvas.height;
                     this.workingContext = this.workingCanvas.getContext("2d");
+                    this.depthbuffer = new Array(this.workingWidth * this.workingHeight);
                 }
                 Device.prototype.clear = function () {
                     this.workingContext.clearRect(0, 0, this.workingWidth, this.workingHeight);
                     this.backbuffer = this.workingContext.getImageData(0, 0, this.workingWidth, this.workingHeight);
+                    for (var i = 0; i < this.depthbuffer.length; i++) {
+                            this.depthbuffer[i] = 10000000;
+                        }
                 };
                 Device.prototype.present = function () {
                     this.workingContext.putImageData(this.backbuffer, 0, 0);
                 };
-                Device.prototype.putPixel = function (x, y, color) {
+                Device.prototype.putPixel = function (x, y, z, color) {
                     this.backbufferdata = this.backbuffer.data;
-                    var index = ((x >> 0) + (y >> 0) * this.workingWidth) * 4;
-                    this.backbufferdata[index] = color.r * 255;
-                    this.backbufferdata[index + 1] = color.g * 255;
-                    this.backbufferdata[index + 2] = color.b * 255;
-                    this.backbufferdata[index + 3] = color.a * 255;
+                    var index = ((x >> 0) + (y >> 0) * this.workingWidth);
+                    var index4 = 4*index;
+                    if(this.depthbuffer[index] < z) {
+                            return;
+                        }
+                    this.depthbuffer[index] = z;
+                    this.backbufferdata[index4] = color.r * 255;
+                    this.backbufferdata[index4 + 1] = color.g * 255;
+                    this.backbufferdata[index4 + 2] = color.b * 255;
+                    this.backbufferdata[index4 + 3] = color.a * 255;
                 };
                 Device.prototype.project = function (coord, transMat) {
                     var point = BABYLON.Vector3.TransformCoordinates(coord, transMat);
@@ -71,7 +80,7 @@
                 };
                 Device.prototype.drawPoint = function (point, color) {
                     if(point.x >= 0 && point.y >= 0 && point.x < this.workingWidth && point.y < this.workingHeight) {
-                        this.putPixel(point.x, point.y, color);
+                        this.putPixel(point.x, point.y, point.z, color);
                     }
                 };
                 Device.prototype.render = function (camera, meshes, surf) {
@@ -220,8 +229,13 @@
                     var sx = this.interpolate(pa.x, pb.x, gradient1) >> 0;
                     var ex = this.interpolate(pc.x, pd.x, gradient2) >> 0;
 
+                    var z1 = this.interpolate(pa.z, pb.z, gradient1);
+                    var z2 = this.interpolate(pc.z, pd.z, gradient2);
+
                     for(var x = sx; x < ex; x++) {
-                        this.drawPoint(new BABYLON.Vector2(x, y), color);
+                        var gradient = (x - sx) / (ex - sx);
+                        var z = this.interpolate(z1, z2, gradient);
+                        this.drawPoint(new BABYLON.Vector3(x, y, z), color);
                     }
                 };
 

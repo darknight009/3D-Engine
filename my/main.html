@@ -76,7 +76,7 @@
                     var g = this.internalBuffer.data[pos+1];
                     var b = this.internalBuffer.data[pos+2];
                     var a = this.internalBuffer.data[pos+3];
-                    return new BABYLON.Color4(r/255.0, g/255.0, b/255.0, 1/255.0);
+                    return new BABYLON.Color4(r/255.0, g/255.0, b/255.0, a/255.0);
                 }
                 return new BABYLON.Color4(1, 1, 1, 1);
             };
@@ -215,7 +215,6 @@
                 Device.prototype.CreateMeshesFromJSON = function (jsonObject) {
                     var meshes = [];
                     var materials = [];
-                    console.log(jsonObject.lights);
 
                     for (var materialIndex = 0; materialIndex < jsonObject.materials.length; materialIndex++) {
                         var material = {};
@@ -338,8 +337,16 @@
 
                             var textureColor;
 
+                            if (texture){
+                                textureColor = texture.map(u, v);
+                            }
+                            else{
+                                textureColor = new BABYLON.Color4(1, 1, 1, 1);
+                            }
+
+
                             this.drawPoint(new BABYLON.Vector3(x, data.currentY, z), 
-                                           new BABYLON.Color4(color.r * ndotl, color.g * ndotl, color.b * ndotl, 1));
+                                           new BABYLON.Color4(color.r * ndotl* textureColor.r, color.g * ndotl* textureColor.g, color.b * ndotl* textureColor.b, textureColor.a));
                         }
                 };
 
@@ -413,7 +420,7 @@
                                 data.vc = v1.TextureCoordinates.y;
                                 data.vd = v2.TextureCoordinates.y;
 
-                                this.processScanLine(data, v1, v3, v1, v2, color);
+                                this.processScanLine(data, v1, v3, v1, v2, color, texture);
                             } else {
                                 data.ndotla = nl1;
                                 data.ndotlb = nl3;
@@ -430,7 +437,7 @@
                                 data.vc = v2.TextureCoordinates.y;
                                 data.vd = v3.TextureCoordinates.y;
 
-                                this.processScanLine(data, v1, v3, v2, v3, color);
+                                this.processScanLine(data, v1, v3, v2, v3, color, texture);
                             }
                         }
                     }
@@ -454,7 +461,7 @@
                                 data.vc = v1.TextureCoordinates.y;
                                 data.vd = v3.TextureCoordinates.y;
 
-                                this.processScanLine(data, v1, v2, v1, v3, color);
+                                this.processScanLine(data, v1, v2, v1, v3, color, texture);
                             } else {
                                 data.ndotla = nl2;
                                 data.ndotlb = nl3;
@@ -471,7 +478,7 @@
                                 data.vc = v1.TextureCoordinates.y;
                                 data.vd = v3.TextureCoordinates.y;
 
-                                this.processScanLine(data, v2, v3, v1, v3, color);
+                                this.processScanLine(data, v2, v3, v1, v3, color, texture);
                             }
                         }
                     }

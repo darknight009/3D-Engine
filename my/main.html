@@ -9,16 +9,29 @@
     <script>
         var song, analyzer;
 
-        function preload(){
-            song = loadSound("1.mp3");
-        }
-
         function setup() {
-          song.loop();
-          song.stop();
-          analyzer = new p5.Amplitude();
-          analyzer.setInput(song);
+          var c = createCanvas(710, 400); 
+          background(100);
+          c.drop(gotFile);
         }
+        function gotFile(file) {
+            console.log(file.name);
+            if (file.type === 'audio') {
+                song = loadSound(file.data, gotAudio,loading);
+            } 
+            else { console.log('Not an audio file!'); }
+
+        function gotAudio(){ 
+            song.loop();
+            song.stop();
+            analyzer = new p5.Amplitude();
+            analyzer.setInput(song);
+        } 
+
+        function loading(progress){
+            console.log("loading");
+        } 
+    }
 
         var SoftEngine;
         (function (SoftEngine) {
@@ -29,7 +42,9 @@
                 }
             return Camera;
             })();
+        
         SoftEngine.Camera = Camera;   
+        
         var Mesh = (function () {
             function Mesh(name) {
                 this.name = name;
@@ -40,6 +55,7 @@
             }
             return Mesh;
             })();
+        
         SoftEngine.Mesh = Mesh; 
 
         var Texture = (function (){
@@ -82,8 +98,10 @@
             };
             return Texture;
         })();
+        
         SoftEngine.Texture = Texture;
-            var Device = (function () {
+        
+        var Device = (function () {
                 function Device(canvas) {
                     this.workingCanvas = canvas;
                     this.workingWidth = canvas.width;
@@ -485,8 +503,9 @@
                 };
 
                 return Device;
-            }) ();
-            SoftEngine.Device = Device;
+        }) ();
+        
+        SoftEngine.Device = Device;
         })(SoftEngine={});
 
         var canvas;

@@ -537,7 +537,9 @@
 
         function initJSON(){
             prev=0;
-            song.pause();
+            if (song){
+                song.pause();
+            }
             device.LoadJSONFileAsync("suzanne.babylon", loadJSONCompleted);
         }
 

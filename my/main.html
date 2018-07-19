@@ -2,6 +2,10 @@
 <html>
 <head>
     <title>3D Soft Engine using HTML5 Canvas</title>
+    <style>
+        #controls * { float: left; 
+            }
+    </style>
     <script src="p5.js"></script>
     <script src="p5.sound.js"></script>
     <script src="p5.dom.js"></script>
@@ -10,8 +14,11 @@
         var song, analyzer;
 
         function setup() {
-          var c = createCanvas(710, 400); 
+          var c = createCanvas(windowWidth, windowHeight/10); 
+          c.position(10, 100);
           background(100);
+          text("Drop your audio file here!",windowWidth/3,20);
+          textSize(16);
           c.drop(gotFile);
         }
         function gotFile(file) {
@@ -535,6 +542,9 @@
         }
 
         function initVizer(){
+            if(!song){
+                alert("Drop an audio file");
+            }
             prev=0;
             meshes = [];
             mesh = new SoftEngine.Mesh("Sphere");
@@ -602,18 +612,16 @@
     </script>
 </head>
 <body>
-    <div>
+    <div id="controls">
         <button onclick="initVizer()">Visualizer</button>
         <button onclick="initJSON()">Load JSON file</button>
         <div class="slidecontainer">
-            <p> Volume: </p>
+            <p> &ensp; Volume: </p>
           <input type="range" min="1" max="100" value="50" class="slider" id="myRange">
-          <p id="p1"> FPS! <p>
+          <p id="p1"> &ensp;&ensp;&ensp;&ensp;FPS! <p>
         </div>
     </div>
-    <div>
-        <canvas id="frontBuffer" style="background-color: black;">
-        </canvas>
-    </div>
+    <canvas id="frontBuffer" style="background-color: black;">
+    </canvas>
 </body>
 </html>

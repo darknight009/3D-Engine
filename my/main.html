@@ -51,8 +51,7 @@
     <script src="babylon.math.js"></script>
     <script>
         var song, analyzer, fft;
-        function preload()
-        {
+        function preload(){
           song = loadSound('1.mp3');
         }
         function setup() {
@@ -90,7 +89,6 @@
                 }
             return Camera;
             })();
-        
         SoftEngine.Camera = Camera;   
         
         var Mesh = (function () {
@@ -103,8 +101,8 @@
             }
             return Mesh;
             })();
-        
         SoftEngine.Mesh = Mesh; 
+        
         var Texture = (function (){
             function Texture(filename, width, height){
                 this.width = width;
@@ -141,8 +139,7 @@
                 return new BABYLON.Color4(1, 1, 1, 1);
             };
             return Texture;
-        })();
-        
+        })();   
         SoftEngine.Texture = Texture;
         
         var Device = (function () {
@@ -487,9 +484,10 @@
                 };
                 return Device;
         }) ();
-        
         SoftEngine.Device = Device;
+
         })(SoftEngine={});
+        
         var canvas;
         var meshes;
         var mesh;
@@ -596,8 +594,6 @@
         function myFunction() {
             document.getElementById("myDropdown").classList.toggle("show");
         }
-
-        // Close the dropdown if the user clicks outside of it
         window.onclick = function(event) {
           if (!event.target.matches('.dropbtn')) {
 
@@ -615,8 +611,9 @@
 </head>
 <body>
     <div id="controls">
+        <button onclick="initJSON()">Load JSON file</button>
         <div class="dropdown">
-        <button onclick="myFunction()" class="dropbtn">Frequencies</button>
+        <button onclick="myFunction()" class="dropbtn">Visualizing Frequencies</button>
           <div id="myDropdown" class="dropdown-content">
             <a onclick="initVizer('bass')">Bass</a>
             <a onclick="initVizer('lowMid')">LowMid</a>

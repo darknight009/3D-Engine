@@ -96,6 +96,7 @@
                 this.name = name;
                 this.Vertices = [];
                 this.Faces = [];
+                this.AABB=[];
                 this.Rotation = BABYLON.Vector3.Zero();
                 this.Position = BABYLON.Vector3.Zero();
             }
@@ -204,6 +205,12 @@
                                 var center = this.project(cMesh.Vertices[cMesh.Vertices.length-1], transformMatrix, worldMatrix)
                                 this.drawPoint(point0.Coordinates, new BABYLON.Color4(1, 1, 1, 1));
                                 this.drawLine(point0.Coordinates, center.Coordinates);
+                            }
+                            for(var indexVertices = 0; indexVertices < cMesh.AABB.length; indexVertices++) {
+                                var point0 = this.project(cMesh.AABB[indexVertices], transformMatrix, worldMatrix);
+                                var center = this.project(cMesh.AABB[cMesh.AABB.length-1], transformMatrix, worldMatrix)
+                                this.drawPoint(point0.Coordinates, new BABYLON.Color4(1, 0, 0, 1));
+                                this.drawBline(point0.Coordinates, center.Coordinates);
                             }
                         }
                         if (surf==="faces"){
@@ -521,12 +528,30 @@
             meshes = [];
             mesh = new SoftEngine.Mesh("Sphere");
             var k=0;
+            var x, y, z;
+            var aabb={
+                maxX:Number.MIN_VALUE,
+                maxY:Number.MIN_VALUE,
+                maxZ:Number.MIN_VALUE,
+                minX:Number.MAX_VALUE,
+                minY:Number.MAX_VALUE,
+                minZ:Number.MAX_VALUE
+            };
             for(var i=0; i<=2*3.14; i=i+0.157){
                 for(var j=0; j<=3.14; j+=0.157){
+                    x=Math.cos(i)*Math.sin(j);
+                    y=Math.sin(i)*Math.sin(j);
+                    z=Math.cos(j);
+                    if (x>aabb.maxX) aabb.maxX=x;
+                    if (x<aabb.minX) aabb.minX=x;
+                    if (y>aabb.maxY) aabb.maxY=y;
+                    if (y<aabb.minY) aabb.minY=y;
+                    if (z>aabb.maxZ) aabb.maxZ=z;
+                    if (z<aabb.minZ) aabb.minZ=z;
                     mesh.Vertices[k] = {
-                                            Coordinates: new BABYLON.Vector3(Math.cos(i)*Math.sin(j), Math.sin(i)*Math.sin(j), Math.cos(j)),
-                                            Normal: new BABYLON.Vector3(Math.cos(i)*Math.sin(j), Math.sin(i)*Math.sin(j), Math.cos(j)),
-                                            WorldCoordinates: null
+                                            Coordinates: new BABYLON.Vector3(x, y, z),
+                                            Normal: new BABYLON.Vector3(x, y, z),
+                                            WorldCoordinates: null,
                                         };
                     k+=1;
                 }
@@ -536,6 +561,42 @@
                                     Normal: new BABYLON.Vector3(0, 0, 0),
                                     WorldCoordinates: null
                                 };
+            var aa_bb=[
+                        {
+                            Coordinates: new BABYLON.Vector3(aabb.maxX, aabb.maxY, aabb.maxZ),
+                            Normal: new BABYLON.Vector3(aabb.maxX, aabb.maxY, aabb.maxZ)
+                        },
+                        {
+                            Coordinates: new BABYLON.Vector3(aabb.maxX, aabb.maxY, aabb.minZ),
+                            Normal: new BABYLON.Vector3(aabb.maxX, aabb.maxY, aabb.minZ)
+                        },
+                        {
+                            Coordinates: new BABYLON.Vector3(aabb.maxX, aabb.minY, aabb.maxZ),
+                            Normal: new BABYLON.Vector3(aabb.maxX, aabb.minY, aabb.maxZ)
+                        },
+                        {
+                            Coordinates: new BABYLON.Vector3(aabb.maxX, aabb.minY, aabb.minZ),
+                            Normal: new BABYLON.Vector3(aabb.maxX, aabb.minY, aabb.minZ)
+                        },
+                        {
+                            Coordinates: new BABYLON.Vector3(aabb.minX, aabb.maxY, aabb.maxZ),
+                            Normal: new BABYLON.Vector3(aabb.minX, aabb.maxY, aabb.maxZ)
+                        },
+                        {
+                            Coordinates: new BABYLON.Vector3(aabb.minX, aabb.maxY, aabb.minZ),
+                            Normal: new BABYLON.Vector3(aabb.minX, aabb.maxY, aabb.minZ)
+                        },
+                        {
+                            Coordinates: new BABYLON.Vector3(aabb.minX, aabb.minY, aabb.maxZ),
+                            Normal: new BABYLON.Vector3(aabb.minX, aabb.minY, aabb.maxZ)
+                        },
+                        {
+                            Coordinates: new BABYLON.Vector3(aabb.minX, aabb.minY, aabb.minZ),
+                            Normal: new BABYLON.Vector3(aabb.minX, aabb.minY, aabb.minZ)
+                        }
+            ]
+            console.log(aa_bb);
+            mesh.AABB=aa_bb;
             meshes.push(mesh);
             song.play();
             requestAnimationFrame(drawVis);

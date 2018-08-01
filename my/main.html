@@ -96,7 +96,7 @@
                 this.name = name;
                 this.Vertices = [];
                 this.Faces = [];
-                this.AABB=[];
+                this.OABB=[];
                 this.Rotation = BABYLON.Vector3.Zero();
                 this.Position = BABYLON.Vector3.Zero();
             }
@@ -207,11 +207,11 @@
                                 this.drawLine(point0.Coordinates, center.Coordinates);
                             }
                            
-                            for(var indexVertices = 0; indexVertices < cMesh.AABB.length-1; indexVertices++) {
-                                var point = this.project(cMesh.AABB[indexVertices], transformMatrix, worldMatrix);
-                                var center_aabb = this.project(cMesh.AABB[cMesh.AABB.length-1], transformMatrix, worldMatrix)
+                            for(var indexVertices = 1; indexVertices < cMesh.OABB.length; indexVertices++) {
+                                var point = this.project(cMesh.OABB[indexVertices], transformMatrix, worldMatrix);
+                                var center_oabb = this.project(cMesh.OABB[0], transformMatrix, worldMatrix)
                                 this.drawPoint(point.Coordinates, new BABYLON.Color4(1, 0, 0, 1));
-                                this.drawBline(point.Coordinates, center_aabb.Coordinates);
+                                this.drawBline(point.Coordinates, center_oabb.Coordinates);
                             }
                         }
                         if (surf==="faces"){
@@ -610,18 +610,18 @@
             mesh = new SoftEngine.Mesh("Sphere");
             var k=0;
             var x, y, z;
-            var aabbx=[Number.MAX_VALUE, Number.MIN_VALUE], aabby=[Number.MAX_VALUE, Number.MIN_VALUE], aabbz=[Number.MAX_VALUE, Number.MIN_VALUE];
+            var oabbx=[Number.MAX_VALUE, Number.MIN_VALUE], oabby=[Number.MAX_VALUE, Number.MIN_VALUE], oabbz=[Number.MAX_VALUE, Number.MIN_VALUE];
             for(var i=0; i<=2*3.14; i=i+0.157){
                 for(var j=0; j<=3.14; j+=0.157){
                     x=Math.cos(i)*Math.sin(j);
                     y=Math.sin(i)*Math.sin(j);
                     z=Math.cos(j);
-                    if (x>aabbx[1]) aabbx[1]=x;
-                    if (x<aabbx[0]) aabbx[0]=x;
-                    if (y>aabby[1]) aabby[1]=y;
-                    if (y<aabby[0]) aabby[0]=y;
-                    if (z>aabbz[1]) aabbz[1]=z;
-                    if (z<aabbz[0]) aabbz[0]=z;
+                    if (x>oabbx[1]) oabbx[1]=x;
+                    if (x<oabbx[0]) oabbx[0]=x;
+                    if (y>oabby[1]) oabby[1]=y;
+                    if (y<oabby[0]) oabby[0]=y;
+                    if (z>oabbz[1]) oabbz[1]=z;
+                    if (z<oabbz[0]) oabbz[0]=z;
                     mesh.Vertices[k] = {
                                             Coordinates: new BABYLON.Vector3(x, y, z),
                                             Normal: new BABYLON.Vector3(x, y, z),
@@ -635,17 +635,17 @@
                                     Normal: new BABYLON.Vector3(0, 0, 0),
                                     WorldCoordinates: null
                                 };
-            var aa_bb=[]
-            aabbx.forEach(function(vx){
-              aabby.forEach(function(vy){
-                aabbz.forEach(function(vz){
-                    aa_bb.push({
+            var oa_bb=[]
+            oabbx.forEach(function(vx){
+              oabby.forEach(function(vy){
+                oabbz.forEach(function(vz){
+                    oa_bb.push({
                         Coordinates: new BABYLON.Vector3(vx, vy, vz),
                         Normal: new BABYLON.Vector3(vx, vy, vz)})
                 });
               });
           });
-            mesh.AABB=aa_bb;
+            mesh.OABB=oa_bb;
             meshes.push(mesh);
             if (!song.isPlaying()){
                 song.play();

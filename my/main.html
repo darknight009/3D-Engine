@@ -50,6 +50,9 @@
     <script src="p5.dom.js"></script>
     <script src="babylon.math.js"></script>
     <script>
+        var viewMatrix;
+        var projectionMatrix;
+        var meshes=[];
         var song, analyzer, fft;
         function preload(){
           song = loadSound('1.mp3');
@@ -193,8 +196,8 @@
                     }
                 };
                 Device.prototype.render = function (camera, meshes, surf) {
-                    var viewMatrix = BABYLON.Matrix.LookAtLH(camera.Position, camera.Target, BABYLON.Vector3.Up());
-                    var projectionMatrix = BABYLON.Matrix.PerspectiveFovLH(0.78, this.workingWidth / this.workingHeight, 0.01, 1.0);
+                    viewMatrix = BABYLON.Matrix.LookAtLH(camera.Position, camera.Target, BABYLON.Vector3.Up());
+                    projectionMatrix = BABYLON.Matrix.PerspectiveFovLH(0.78, this.workingWidth / this.workingHeight, 0.01, 1.0);
                     for(var index = 0; index < meshes.length; index++) {
                         var cMesh = meshes[index];
                         var worldMatrix = BABYLON.Matrix.RotationYawPitchRoll(cMesh.Rotation.y, cMesh.Rotation.x, cMesh.Rotation.z).multiply(BABYLON.Matrix.Translation(cMesh.Position.x, cMesh.Position.y, cMesh.Position.z));
@@ -205,13 +208,6 @@
                                 var center = this.project(cMesh.Vertices[cMesh.Vertices.length-1], transformMatrix, worldMatrix)
                                 this.drawPoint(point0.Coordinates, new BABYLON.Color4(indexVertices/(cMesh.Vertices.length-1), 1, indexVertices/(cMesh.Vertices.length-1), 1));
                                 this.drawLine(point0.Coordinates, center.Coordinates);
-                            }
-                           
-                            for(var indexVertices = 1; indexVertices < cMesh.OABB.length; indexVertices++) {
-                                var point = this.project(cMesh.OABB[indexVertices], transformMatrix, worldMatrix);
-                                var center_oabb = this.project(cMesh.OABB[0], transformMatrix, worldMatrix)
-                                this.drawPoint(point.Coordinates, new BABYLON.Color4(1, 0, 0, 1));
-                                this.drawBline(point.Coordinates, center_oabb.Coordinates);
                             }
                         }
                         if (surf==="faces"){
@@ -227,12 +223,29 @@
                                 var color = 0.25 + ((indexFaces % cMesh.Faces.length) / cMesh.Faces.length) * 0.75;
                                 this.drawTriangle(pixelA, pixelB, pixelC, new BABYLON.Color4(color, color, color, 1), cMesh.Texture);
                             }
-                            for(var indexVertices = 0; indexVertices < cMesh.AABB.length-1; indexVertices++) {
-                                var point = this.project(cMesh.AABB[indexVertices], transformMatrix, worldMatrix);
-                                var center_aabb = this.project(cMesh.AABB[cMesh.AABB.length-1], transformMatrix, worldMatrix);
-                                this.drawPoint(point.Coordinates, new BABYLON.Color4(1, 0, 0, 1));
-                                this.drawBline(point.Coordinates, center_aabb.Coordinates);
-                            }
+
+                        }
+
+                    }
+                };
+                Device.prototype.selectBB =function(coords){
+                    console.log(coords);
+                    for(var i=0; i<meshes.length; i++){
+                        var worldMatrix = BABYLON.Matrix.RotationYawPitchRoll(meshes[i].Rotation.y, meshes[i].Rotation.x, meshes[i].Rotation.z).multiply(BABYLON.Matrix.Translation(meshes[i].Position.x, meshes[i].Position.y, meshes[i].Position.z));
+                        var transformMatrix = worldMatrix.multiply(viewMatrix).multiply(projectionMatrix);
+                        var X=[Number.MAX_VALUE, Number.MIN_VALUE];
+                        var Y=[Number.MAX_VALUE, Number.MIN_VALUE];
+                        for(var j = 0; j <8 ; j++) {
+                            var point = this.project(meshes[i].OABB[j], transformMatrix, worldMatrix);
+                            if (point.Coordinates.x>X[1]) X[1]=point.Coordinates.x;
+                            if (point.Coordinates.x<X[0]) X[0]=point.Coordinates.x;
+                            if (point.Coordinates.y>Y[1]) Y[1]=point.Coordinates.y;
+                            if (point.Coordinates.y<Y[0]) Y[0]=point.Coordinates.y;
+                        }
+                        console.log(X,Y);
+                        if(coords.x<=X[1] && coords.x>=X[0] && coords.y<=Y[1] && coords.y>=Y[0]){
+                            if (!song.isPlaying())song.play();
+                            else song.stop();
                         }
                     }
                 };
@@ -276,7 +289,6 @@
                     xmlhttp.send(null);
                 };
                 Device.prototype.CreateMeshesFromJSON = function (jsonObject) {
-                    var meshes = [];
                     var materials = [];
                     for (var materialIndex = 0; materialIndex < jsonObject.materials.length; materialIndex++) {
                         var material = {};
@@ -305,14 +317,7 @@
                         var verticesCount = verticesArray.length / verticesStep;
                         var facesCount = indicesArray.length / 3;
                         var mesh = new SoftEngine.Mesh(jsonObject.meshes[meshIndex].name);
-                        var aabb={
-                                maxX:Number.MIN_VALUE,
-                                maxY:Number.MIN_VALUE,
-                                maxZ:Number.MIN_VALUE,
-                                minX:Number.MAX_VALUE,
-                                minY:Number.MAX_VALUE,
-                                minZ:Number.MAX_VALUE
-                            };
+                        var oabbx=[Number.MAX_VALUE, Number.MIN_VALUE], oabby=[Number.MAX_VALUE, Number.MIN_VALUE], oabbz=[Number.MAX_VALUE, Number.MIN_VALUE];
                         for (var index = 0; index < verticesCount; index++) {
                             var x = verticesArray[index * verticesStep];
                             var y = verticesArray[index * verticesStep + 1];
@@ -320,12 +325,12 @@
                             var nx = verticesArray[index * verticesStep + 3];
                             var ny = verticesArray[index * verticesStep + 4];
                             var nz = verticesArray[index * verticesStep + 5];
-                            if (x>aabb.maxX) aabb.maxX=x;
-                            if (x<aabb.minX) aabb.minX=x;
-                            if (y>aabb.maxY) aabb.maxY=y;
-                            if (y<aabb.minY) aabb.minY=y;
-                            if (z>aabb.maxZ) aabb.maxZ=z;
-                            if (z<aabb.minZ) aabb.minZ=z;
+                            if (x>oabbx[1]) oabbx[1]=x;
+                            if (x<oabbx[0]) oabbx[0]=x;
+                            if (y>oabby[1]) oabby[1]=y;
+                            if (y<oabby[0]) oabby[0]=y;
+                            if (z>oabbz[1]) oabbz[1]=z;
+                            if (z<oabbz[0]) oabbz[0]=z;
                             mesh.Vertices[index] = {
                                 Coordinates: new BABYLON.Vector3(x, y, z),
                                 Normal: new BABYLON.Vector3(nx, ny, nz),
@@ -356,41 +361,17 @@
                             var meshTextureName = materials[meshTextureID].DiffuseTextureName;
                             mesh.Texture = new Texture(meshTextureName, 512, 512);
                         }
-                        var aa_bb=[
-                                    {
-                                        Coordinates: new BABYLON.Vector3(aabb.maxX, aabb.maxY, aabb.maxZ),
-                                        Normal: new BABYLON.Vector3(aabb.maxX, aabb.maxY, aabb.maxZ)
-                                    },
-                                    {
-                                        Coordinates: new BABYLON.Vector3(aabb.maxX, aabb.maxY, aabb.minZ),
-                                        Normal: new BABYLON.Vector3(aabb.maxX, aabb.maxY, aabb.minZ)
-                                    },
-                                    {
-                                        Coordinates: new BABYLON.Vector3(aabb.maxX, aabb.minY, aabb.maxZ),
-                                        Normal: new BABYLON.Vector3(aabb.maxX, aabb.minY, aabb.maxZ)
-                                    },
-                                    {
-                                        Coordinates: new BABYLON.Vector3(aabb.maxX, aabb.minY, aabb.minZ),
-                                        Normal: new BABYLON.Vector3(aabb.maxX, aabb.minY, aabb.minZ)
-                                    },
-                                    {
-                                        Coordinates: new BABYLON.Vector3(aabb.minX, aabb.maxY, aabb.maxZ),
-                                        Normal: new BABYLON.Vector3(aabb.minX, aabb.maxY, aabb.maxZ)
-                                    },
-                                    {
-                                        Coordinates: new BABYLON.Vector3(aabb.minX, aabb.maxY, aabb.minZ),
-                                        Normal: new BABYLON.Vector3(aabb.minX, aabb.maxY, aabb.minZ)
-                                    },
-                                    {
-                                        Coordinates: new BABYLON.Vector3(aabb.minX, aabb.minY, aabb.maxZ),
-                                        Normal: new BABYLON.Vector3(aabb.minX, aabb.minY, aabb.maxZ)
-                                    },
-                                    {
-                                        Coordinates: new BABYLON.Vector3(aabb.minX, aabb.minY, aabb.minZ),
-                                        Normal: new BABYLON.Vector3(aabb.minX, aabb.minY, aabb.minZ)
-                                    }
-                        ];
-                        mesh.AABB=aa_bb;
+                        var oa_bb=[]
+                        oabbx.forEach(function(vx){
+                            oabby.forEach(function(vy){
+                                oabbz.forEach(function(vz){
+                                    oa_bb.push({
+                                      Coordinates: new BABYLON.Vector3(vx, vy, vz),
+                                      Normal: new BABYLON.Vector3(vx, vy, vz)})
+                                });
+                            });
+                        });
+                        mesh.OABB=oa_bb;
                         meshes.push(mesh);
                     }
                     return meshes;
@@ -577,12 +558,12 @@
         })(SoftEngine={});
         
         var canvas;
-        var meshes;
         var mesh;
         var device;
         var cam;
         var prev = 0;
         var type='all';
+        var mouseCoord={x: -1, y: -1};
         document.addEventListener("DOMContentLoaded", init, false);
         function init() {
             canvas = document.getElementById("frontBuffer");
@@ -645,7 +626,7 @@
                 });
               });
           });
-            mesh.OABB=oa_bb;
+            mesh.OABB=oa_bb; 
             meshes.push(mesh);
             if (!song.isPlaying()){
                 song.play();
@@ -706,11 +687,14 @@
             document.getElementById("myDropdown").classList.toggle("show");
         }
         window.onclick = function(event) {
+            mouseCoord.x=event.clientX;
+            mouseCoord.y=event.clientY;
+            if (mouseCoord.y>200)device.selectBB(mouseCoord, cam);
+
           if (!event.target.matches('.dropbtn')) {
 
             var dropdowns = document.getElementsByClassName("dropdown-content");
-            var i;
-            for (i = 0; i < dropdowns.length; i++) {
+            for (var i = 0; i < dropdowns.length; i++) {
               var openDropdown = dropdowns[i];
               if (openDropdown.classList.contains('show')) {
                 openDropdown.classList.remove('show');
@@ -721,6 +705,7 @@
     </script>
 </head>
 <body>
+    <canvas id="frontBuffer" style="background-color: black;"></canvas>
     <div id="controls">
         <button onclick="initJSON()">Load JSON file</button>
         <div class="dropdown">
@@ -734,12 +719,12 @@
             <a onclick="initVizer('all')">Whole Band</a>
           </div>
         </div>
+        <button onclick="gotAudio()">Pause</button>
         <div class="slidecontainer">
             <p> &ensp; Volume: </p>
           <input type="range" min="1" max="100" value="50" class="slider" id="myRange">
           <p id="p1"> &ensp;&ensp;&ensp;&ensp;FPS! <p>
         </div>
     </div>
-    <canvas id="frontBuffer" style="background-color: black;"></canvas>
 </body>
 </html>

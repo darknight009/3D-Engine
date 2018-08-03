@@ -51,6 +51,7 @@
     <script src="babylon.math.js"></script>
     <script>
         var viewMatrix;
+        var cam;
         var projectionMatrix;
         var meshes=[];
         var song, analyzer, fft;
@@ -229,24 +230,33 @@
                     }
                 };
                 Device.prototype.selectBB =function(coords){
-                    console.log(coords);
+                    var near=[];
                     for(var i=0; i<meshes.length; i++){
                         var worldMatrix = BABYLON.Matrix.RotationYawPitchRoll(meshes[i].Rotation.y, meshes[i].Rotation.x, meshes[i].Rotation.z).multiply(BABYLON.Matrix.Translation(meshes[i].Position.x, meshes[i].Position.y, meshes[i].Position.z));
                         var transformMatrix = worldMatrix.multiply(viewMatrix).multiply(projectionMatrix);
                         var X=[Number.MAX_VALUE, Number.MIN_VALUE];
                         var Y=[Number.MAX_VALUE, Number.MIN_VALUE];
+                        var maxZ=Number.MIN_VALUE;//get maximum z value of the bounding box of each mesh
                         for(var j = 0; j <8 ; j++) {
                             var point = this.project(meshes[i].OABB[j], transformMatrix, worldMatrix);
                             if (point.Coordinates.x>X[1]) X[1]=point.Coordinates.x;
                             if (point.Coordinates.x<X[0]) X[0]=point.Coordinates.x;
                             if (point.Coordinates.y>Y[1]) Y[1]=point.Coordinates.y;
                             if (point.Coordinates.y<Y[0]) Y[0]=point.Coordinates.y;
+                            if (point.Coordinates.z>maxZ){
+                                maxZ=point.Coordinates.z;
+                            }
                         }
-                        console.log(X,Y);
-                        if(coords.x<=X[1] && coords.x>=X[0] && coords.y<=Y[1] && coords.y>=Y[0]){
-                            if (!song.isPlaying())song.play();
-                            else song.stop();
+                        if(coords.x<=X[1] && coords.x>=X[0] && coords.y<=Y[1] && coords.y>=Y[0] && meshes[i].Position.z<=cam.Position.z){
+                            near.push({z:maxZ,
+                                        mesh:meshes[i]});
                         }
+                    }
+                    near.sort(function(a, b) {
+                        return b.z - a.z;
+                    });
+                    if(near.length!=0){
+                        alert("selected "+near[0].mesh.name);
                     }
                 };
                 Device.prototype.drawLine = function(p0, p1){
@@ -560,7 +570,6 @@
         var canvas;
         var mesh;
         var device;
-        var cam;
         var prev = 0;
         var type='all';
         var mouseCoord={x: -1, y: -1};
@@ -587,7 +596,6 @@
             }
             type=freq;
             prev=0;
-            meshes = [];
             mesh = new SoftEngine.Mesh("Sphere");
             var k=0;
             var x, y, z;

@@ -34,7 +34,7 @@
             color: black;
             padding: 12px 16px;
             text-decoration: none;
-            display: block;
+            display: block; 
         }
 
         .dropdown a:hover {background-color: #ddd;}
@@ -55,6 +55,7 @@
         var projectionMatrix;
         var meshes=[];
         var song, analyzer, fft;
+        var selectedBB;
         function preload(){
           song = loadSound('1.mp3');
         }
@@ -248,8 +249,7 @@
                             }
                         }
                         if(coords.x<=X[1] && coords.x>=X[0] && coords.y<=Y[1] && coords.y>=Y[0] && meshes[i].Position.z<=cam.Position.z){
-                            near.push({z:maxZ,
-                                        mesh:meshes[i]});
+                            near.push({z:maxZ, mesh:meshes[i]});
                         }
                     }
                     near.sort(function(a, b) {
@@ -257,6 +257,7 @@
                     });
                     if(near.length!=0){
                         alert("selected "+near[0].mesh.name);
+                        selectedBB = near[0].mesh;
                     }
                 };
                 Device.prototype.drawLine = function(p0, p1){
@@ -571,7 +572,7 @@
         var mesh;
         var device;
         var prev = 0;
-        var type='all';
+        var type;
         var mouseCoord={x: -1, y: -1};
         document.addEventListener("DOMContentLoaded", init, false);
         function init() {
@@ -590,11 +591,10 @@
             }
             device.LoadJSONFileAsync("suzanne.babylon", loadJSONCompleted);
         }
-        function initVizer(freq){
+        function initVizer(){
             if(!song){
                 alert("Drop an audio file");
             }
-            type=freq;
             prev=0;
             mesh = new SoftEngine.Mesh("Sphere");
             var k=0;
@@ -636,10 +636,16 @@
           });
             mesh.OABB=oa_bb; 
             meshes.push(mesh);
+            
+        }
+        function setFreq(freq){
+            type=freq;
             if (!song.isPlaying()){
                 song.play();
             };
-            requestAnimationFrame(drawVis);
+            if (type){
+                requestAnimationFrame(drawVis);
+            }
         }
         function loadJSONCompleted(meshesLoaded) {
             meshes = meshesLoaded;
@@ -697,7 +703,7 @@
         window.onclick = function(event) {
             mouseCoord.x=event.clientX;
             mouseCoord.y=event.clientY;
-            if (mouseCoord.y>200)device.selectBB(mouseCoord, cam);
+            device.selectBB(mouseCoord, cam);
 
           if (!event.target.matches('.dropbtn')) {
 
@@ -709,22 +715,34 @@
               }
             }
           }
+
         }
+        window.onkeydown = function(event) {
+            var key = event.keyCode;
+            event.preventDefault();
+            if(selectedBB){
+                if      (key === 37) selectedBB.Position.x+=0.1;
+                else if (key === 38) selectedBB.Position.y+=0.1;
+                else if (key === 39) selectedBB.Position.x-=0.1;
+                else if (key === 40) selectedBB.Position.y-=0.1;
+            }
+        };
     </script>
 </head>
 <body>
     <canvas id="frontBuffer" style="background-color: black;"></canvas>
     <div id="controls">
-        <button onclick="initJSON()">Load JSON file</button>
+        <button onclick="initJSON()">Load JSON File</button>
+        <button onclick="initVizer()">Create new visualizer</button>
         <div class="dropdown">
         <button onclick="myFunction()" class="dropbtn">Visualizing Frequencies</button>
           <div id="myDropdown" class="dropdown-content">
-            <a onclick="initVizer('bass')">Bass</a>
-            <a onclick="initVizer('lowMid')">LowMid</a>
-            <a onclick="initVizer('mid')">Mid</a>
-            <a onclick="initVizer('highMid')">HighMid</a>
-            <a onclick="initVizer('treble')">Treble</a>
-            <a onclick="initVizer('all')">Whole Band</a>
+            <a onclick="setFreq('bass')">Bass</a>
+            <a onclick="setFreq('lowMid')">LowMid</a>
+            <a onclick="setFreq('mid')">Mid</a>
+            <a onclick="setFreq('highMid')">HighMid</a>
+            <a onclick="setFreq('treble')">Treble</a>
+            <a onclick="setFreq('all')">Whole Band</a>
           </div>
         </div>
         <button onclick="gotAudio()">Pause</button>

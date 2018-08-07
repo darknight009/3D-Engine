@@ -50,6 +50,7 @@
     <script src="p5.dom.js"></script>
     <script src="babylon.math.js"></script>
     <script>
+        var objCount=0;
         var viewMatrix;
         var cam;
         var projectionMatrix;
@@ -61,7 +62,7 @@
         }
         function setup() {
           var c = createCanvas(windowWidth, windowHeight/10); 
-          c.position(10, 100);
+          c.position(10, 0);
           background(100);
           text("Drop your audio file here!",windowWidth/3,20);
           textSize(16);
@@ -104,6 +105,7 @@
                 this.OABB=[];
                 this.Rotation = BABYLON.Vector3.Zero();
                 this.Position = BABYLON.Vector3.Zero();
+                this.animFreq;
             }
             return Mesh;
             })();
@@ -572,7 +574,6 @@
         var mesh;
         var device;
         var prev = 0;
-        var type;
         var mouseCoord={x: -1, y: -1};
         document.addEventListener("DOMContentLoaded", init, false);
         function init() {
@@ -585,6 +586,7 @@
             cam.Target = new BABYLON.Vector3(0, 0, 0);
         }
         function initJSON(){
+            objCount+=1;
             prev=0;
             if (song){
                 song.pause();
@@ -592,11 +594,12 @@
             device.LoadJSONFileAsync("suzanne.babylon", loadJSONCompleted);
         }
         function initVizer(){
+            objCount+=1;
             if(!song){
                 alert("Drop an audio file");
             }
             prev=0;
-            mesh = new SoftEngine.Mesh("Sphere");
+            mesh = new SoftEngine.Mesh("Sphere"+objCount.toString());
             var k=0;
             var x, y, z;
             var oabbx=[Number.MAX_VALUE, Number.MIN_VALUE], oabby=[Number.MAX_VALUE, Number.MIN_VALUE], oabbz=[Number.MAX_VALUE, Number.MIN_VALUE];
@@ -635,17 +638,16 @@
               });
           });
             mesh.OABB=oa_bb; 
+            mesh.animFreq='all';
             meshes.push(mesh);
             
         }
         function setFreq(freq){
-            type=freq;
             if (!song.isPlaying()){
                 song.play();
             };
-            if (type){
-                requestAnimationFrame(drawVis);
-            }
+            mesh.animFreq=freq;
+            requestAnimationFrame(drawVis);
         }
         function loadJSONCompleted(meshesLoaded) {
             meshes = meshesLoaded;
@@ -670,32 +672,20 @@
             device.clear();
             var spectrum = fft.analyze();
             var lowlvl = fft.getEnergy("bass", "lowMid", "mid", "highMid", "treble");
-            if(type==='all'){
-                vis(fft.getEnergy("bass", "treble")/255);
-            }
-            if(type=='bass'){
-                vis(fft.getEnergy("bass")/255);
-            }
-            if(type=='lowMid'){
-                vis(fft.getEnergy("lowMid")/255);
-            }
-            if(type=='mid'){
-                vis(fft.getEnergy("mid")/255);
-            }
-            if(type=='highMid'){
-                vis(fft.getEnergy("highMid")/255);
-            }
-            if(type=='treble'){
-                vis(fft.getEnergy("treble")/255);
-            }
+            meshes.forEach(function(m){
+                if(m.animFreq==='all'){
+                    rms = fft.getEnergy("bass", "treble")/255;
+                }
+                else{
+                    rms = fft.getEnergy(m.animFreq)/255;
+                }
+                m.Rotation.y += rms/20;
+                if(rms>0.7)m.Position.z+=rms/16;
+                else if(m.Position.z>=0)m.Position.z-=1.5;
+            });
             device.render(cam, meshes, "volume");
             device.present();
             requestAnimationFrame(drawVis);
-        }
-        function vis(rms){
-            mesh.Rotation.y += rms/20;
-            if(rms>0.7)mesh.Position.z+=rms/16;
-            else if(mesh.Position.z>=0)mesh.Position.z-=1.5;
         }
         function myFunction() {
             document.getElementById("myDropdown").classList.toggle("show");

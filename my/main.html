@@ -705,16 +705,75 @@
               }
             }
           }
-
         }
+        var trans=false;
+        var rot=false;
+        var direction;
         window.onkeydown = function(event) {
             var key = event.keyCode;
             event.preventDefault();
             if(selectedBB){
-                if      (key === 37) selectedBB.Position.x+=0.1;
-                else if (key === 38) selectedBB.Position.y+=0.1;
-                else if (key === 39) selectedBB.Position.x-=0.1;
-                else if (key === 40) selectedBB.Position.y-=0.1;
+                if (key===84){
+                    trans=true;
+                    rot=false
+                }
+                if (key===82){
+                    rot=true;
+                    trans=false;
+                }
+                if(trans || rot){
+                    if (key===88) direction ='x';
+                    if (key===89) direction ='y';
+                    if (key===90) direction ='z';
+                    if (key===27){
+                        trans=false;
+                        rot=false;
+                    }
+                }
+
+                if(trans){
+                    if(direction==='x'){
+                        if      (key === 38 || key === 39) selectedBB.Position.x+=0.1;
+                        else if (key === 37 || key === 40) selectedBB.Position.x-=0.1;
+                    }
+                    else if(direction==='y'){
+                        if      (key === 38 || key === 39) selectedBB.Position.y+=0.1;
+                        else if (key === 37 || key === 40) selectedBB.Position.y-=0.1;
+                    }
+                    else if(direction==='z'){
+                        if      (key === 38 || key === 39) selectedBB.Position.z+=0.1;
+                        else if (key === 37 || key === 40) selectedBB.Position.z-=0.1;
+                    }
+                    else{
+                        if(key === 37) selectedBB.Position.x-=0.1;
+                        else if(key === 38) selectedBB.Position.y+=0.1;
+                        else if(key === 39) selectedBB.Position.x+=0.1;
+                        else if(key === 40) selectedBB.Position.y-=0.1;
+                    }
+
+                }
+                if(rot){
+                    if(direction==='x'){
+                        if      (key === 38 || key === 39) selectedBB.Rotation.x+=0.1;
+                        else if (key === 37 || key === 40) selectedBB.Rotation.x-=0.1;
+                    }
+                    else if(direction==='y'){
+                        if      (key === 38 || key === 39) selectedBB.Rotation.y+=0.1;
+                        else if (key === 37 || key === 40) selectedBB.Rotation.y-=0.1;
+                    }
+                    else if(direction==='z'){
+                        if      (key === 38 || key === 39) selectedBB.Rotation.z+=0.1;
+                        else if (key === 37 || key === 40) selectedBB.Rotation.z-=0.1;
+                    }
+                    else{
+                        if(key === 37) selectedBB.Position.x-=0.1;
+                        else if(key === 38) selectedBB.Position.y+=0.1;
+                        else if(key === 39) selectedBB.Position.x+=0.1;
+                        else if(key === 40) selectedBB.Position.y-=0.1;
+                    }
+
+                }
+                
             }
         };
     </script>

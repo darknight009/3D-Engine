@@ -202,6 +202,7 @@
                 Device.prototype.render = function (camera, meshes, surf) {
                     viewMatrix = BABYLON.Matrix.LookAtLH(camera.Position, camera.Target, BABYLON.Vector3.Up());
                     projectionMatrix = BABYLON.Matrix.PerspectiveFovLH(0.78, this.workingWidth / this.workingHeight, 0.01, 1.0);
+                    this.Collision();
                     for(var index = 0; index < meshes.length; index++) {
                         var cMesh = meshes[index];
                         var worldMatrix = BABYLON.Matrix.RotationYawPitchRoll(cMesh.Rotation.y, cMesh.Rotation.x, cMesh.Rotation.z).multiply(BABYLON.Matrix.Translation(cMesh.Position.x, cMesh.Position.y, cMesh.Position.z));
@@ -227,11 +228,51 @@
                                 var color = 0.25 + ((indexFaces % cMesh.Faces.length) / cMesh.Faces.length) * 0.75;
                                 this.drawTriangle(pixelA, pixelB, pixelC, new BABYLON.Color4(color, color, color, 1), cMesh.Texture);
                             }
-
                         }
 
                     }
                 };
+
+                Device.prototype.Collision = function(){
+                    for(var i=0; i<meshes.length; i++){
+                        for(var j=0; j<meshes.length; j++){
+                            if(i!=j){
+                                var worldMatrixI = BABYLON.Matrix.RotationYawPitchRoll(meshes[i].Rotation.y, meshes[i].Rotation.x, meshes[i].Rotation.z).multiply(BABYLON.Matrix.Translation(meshes[i].Position.x, meshes[i].Position.y, meshes[i].Position.z));
+                                var transformMatrixI = worldMatrixI.multiply(viewMatrix).multiply(projectionMatrix);
+                                var XI=[Number.MAX_VALUE, Number.MIN_VALUE];
+                                var YI=[Number.MAX_VALUE, Number.MIN_VALUE];
+                                var ZI=[Number.MAX_VALUE, Number.MIN_VALUE];
+                                for(var k = 0; k <8 ; k++) {
+                                    var point = this.project(meshes[i].OABB[k], transformMatrixI, worldMatrixI);
+                                    if (point.Coordinates.x>XI[1]) XI[1]=point.Coordinates.x;
+                                    if (point.Coordinates.x<XI[0]) XI[0]=point.Coordinates.x;
+                                    if (point.Coordinates.y>YI[1]) YI[1]=point.Coordinates.y;
+                                    if (point.Coordinates.y<YI[0]) YI[0]=point.Coordinates.y;
+                                    if (point.Coordinates.z>ZI[1]) ZI[1]=point.Coordinates.z;
+                                    if (point.Coordinates.z<ZI[0]) ZI[0]=point.Coordinates.z;
+                                }
+                                var worldMatrixJ = BABYLON.Matrix.RotationYawPitchRoll(meshes[j].Rotation.y, meshes[j].Rotation.x, meshes[j].Rotation.z).multiply(BABYLON.Matrix.Translation(meshes[j].Position.x, meshes[j].Position.y, meshes[j].Position.z));
+                                var transformMatrixJ = worldMatrixJ.multiply(viewMatrix).multiply(projectionMatrix);
+                                var XJ=[Number.MAX_VALUE, Number.MIN_VALUE];
+                                var YJ=[Number.MAX_VALUE, Number.MIN_VALUE];
+                                var ZJ=[Number.MAX_VALUE, Number.MIN_VALUE];
+                                for(var k = 0; k <8 ; k++) {
+                                    var point = this.project(meshes[i].OABB[k], transformMatrixJ, worldMatrixJ);
+                                    if (point.Coordinates.x>XJ[1]) XJ[1]=point.Coordinates.x;
+                                    if (point.Coordinates.x<XJ[0]) XJ[0]=point.Coordinates.x;
+                                    if (point.Coordinates.y>YJ[1]) YJ[1]=point.Coordinates.y;
+                                    if (point.Coordinates.y<YJ[0]) YJ[0]=point.Coordinates.y;
+                                    if (point.Coordinates.z>ZJ[1]) ZJ[1]=point.Coordinates.z;
+                                    if (point.Coordinates.z<ZJ[0]) ZJ[0]=point.Coordinates.z;
+                                }
+                                if((XI[0] <= XJ[1] && XI[1] >= XJ[0]) && (YI[0] <= YJ[1] && YI[1] >= YJ[0]) && (ZI[0] <= ZJ[1] && ZI[1] >= ZJ[0])){
+                                    console.log("intersection");
+                                } 
+                            }
+                        }
+                    }
+                };
+
                 Device.prototype.selectBB =function(coords){
                     var near=[];
                     for(var i=0; i<meshes.length; i++){

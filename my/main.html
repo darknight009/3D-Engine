@@ -45,7 +45,7 @@
             position:relative;}
 
         #selection {
-            border: 1px dotted #fff;
+            border: 1px dotted #ff0000;
             position: absolute;
         }
 
@@ -237,6 +237,26 @@
 
                     }
                 };
+
+                Device.prototype.selection = function(x0, y0, x1, y1){
+                    for(var i=0; i<meshes.length; i++){
+                        var worldMatrixI = BABYLON.Matrix.RotationYawPitchRoll(meshes[i].Rotation.y, meshes[i].Rotation.x, meshes[i].Rotation.z).multiply(BABYLON.Matrix.Translation(meshes[i].Position.x, meshes[i].Position.y, meshes[i].Position.z));
+                        var transformMatrixI = worldMatrixI.multiply(viewMatrix).multiply(projectionMatrix);
+                        var XI=[Number.MAX_VALUE, Number.MIN_VALUE];
+                        var YI=[Number.MAX_VALUE, Number.MIN_VALUE];
+                        for(var k = 0; k <8 ; k++){
+                            var point = this.project(meshes[i].OABB[k], transformMatrixI, worldMatrixI);
+                            if (point.Coordinates.x>XI[1]) XI[1]=point.Coordinates.x;
+                            if (point.Coordinates.x<XI[0]) XI[0]=point.Coordinates.x;
+                            if (point.Coordinates.y>YI[1]) YI[1]=point.Coordinates.y;
+                            if (point.Coordinates.y<YI[0]) YI[0]=point.Coordinates.y;
+                        }
+                        console.log(x0, y0, x1, y1, XI[0], YI[0], XI[1], YI[1]);
+                        if((XI[0] <= x1 && XI[1] >= x0) && (YI[0] <= y1 && YI[1] >= y0)) {
+                            console.log("selected" + meshes[i].name);
+                        } 
+                    }
+                }
 
                 Device.prototype.Collision = function(){
                     for(var i=0; i<meshes.length; i++){
@@ -757,15 +777,20 @@
             } else if (!selection_start && selection_end) {
                 window.selection_visible = false;
                 selection.hidden = 1;
+                device.selection(x1, y1, x1+x2, y1+y2);
             } else {
                 var point_top_left_x = window.initial_mouse_x;
                 var point_top_left_y = window.initial_mouse_y;
                 var point_bottom_right_x = x;
                 var point_bottom_right_y = y;
-                selection.style.marginLeft = Math.min(x, window.initial_mouse_x) + 'px';
-                selection.style.marginTop = Math.min(y, window.initial_mouse_y) + 'px';
-                selection.style.width = Math.abs(point_bottom_right_x - point_top_left_x) + 'px';
-                selection.style.height = Math.abs(point_bottom_right_y - point_top_left_y) + 'px';
+                x1=Math.min(x, window.initial_mouse_x);
+                y1=Math.min(y, window.initial_mouse_y);
+                x2=Math.abs(point_bottom_right_x - point_top_left_x);
+                y2=Math.abs(point_bottom_right_y - point_top_left_y);
+                selection.style.left = x1 + 'px';
+                selection.style.top = y1 + 'px';
+                selection.style.width = x2 + 'px';
+                selection.style.height = y2 + 'px';
                 (selection.hidden == 1) ? (selection.hidden = (window.selection_visible ? 0 : 1)) : null;
             }
         }

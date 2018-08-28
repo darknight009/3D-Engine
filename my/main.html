@@ -738,27 +738,8 @@
         function myFunction() {
             document.getElementById("myDropdown").classList.toggle("show");
         }
-        function reCalc() {
-            var x3 = Math.min(x1,x2);
-            var x4 = Math.max(x1,x2);
-            var y3 = Math.min(y1,y2);
-            var y4 = Math.max(y1,y2);
-            selection.style.left = x3 + 'px';
-            selection.style.top = y3 + 'px';
-            selection.style.width = x4 - x3 + 'px';
-            selection.style.height = y4 - y3 + 'px';
-        }
         window.onclick = function(event) {
-            mouseCoord.x=event.clientX;
-            mouseCoord.y=event.clientY;
-            x1=mouseCoord.x;
-            x2=mouseCoord.y;
-            selection.hidden = 0;
-            reCalc();
-            device.selectBB(mouseCoord, cam);
-
           if (!event.target.matches('.dropbtn')) {
-
             var dropdowns = document.getElementsByClassName("dropdown-content");
             for (var i = 0; i < dropdowns.length; i++) {
               var openDropdown = dropdowns[i];
@@ -768,13 +749,37 @@
             }
           }
         }
-        window.onmousemove = function(e) {
-            x2 = e.clientX;
-            y2 = e.clientY;
-            reCalc();
-        };
+        function selectionCalc(x, y ,selection_start=false, selection_end=false) {
+            if (selection_start && !selection_end) {
+                window.initial_mouse_x = x;
+                window.initial_mouse_y = y;
+                window.selection_visible = true;
+            } else if (!selection_start && selection_end) {
+                window.selection_visible = false;
+                selection.hidden = 1;
+            } else {
+                var point_top_left_x = window.initial_mouse_x;
+                var point_top_left_y = window.initial_mouse_y;
+                var point_bottom_right_x = x;
+                var point_bottom_right_y = y;
+                selection.style.marginLeft = Math.min(x, window.initial_mouse_x) + 'px';
+                selection.style.marginTop = Math.min(y, window.initial_mouse_y) + 'px';
+                selection.style.width = Math.abs(point_bottom_right_x - point_top_left_x) + 'px';
+                selection.style.height = Math.abs(point_bottom_right_y - point_top_left_y) + 'px';
+                (selection.hidden == 1) ? (selection.hidden = (window.selection_visible ? 0 : 1)) : null;
+            }
+        }
         window.onmouseup = function(e) {
-            selection.hidden = 1;
+            selectionCalc(e.clientX, e.clientY, false, true)
+        };
+        window.onmousedown = function(event) {
+            selectionCalc(event.clientX, event.clientY, true, false);
+            mouseCoord.x=event.clientX;
+            mouseCoord.y=event.clientY;
+            device.selectBB(mouseCoord, cam);
+        };
+        window.onmousemove = function(e) {
+            window.selection_visible ? selectionCalc(e.clientX, e.clientY) : null;
         };
         
         var trans=false;

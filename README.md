@@ -10,8 +10,6 @@ A basic 3D engine using Babylon.js
   4. To create visualizer for an audio file
     <br>
      > drag and drop the audio file into the audio drop bar 
-     <br>
      > select create new visualizer and select the range of audio frequencies to visualize
-     <br>
      > The sphere radius changes according to the amplitude of various frequencies
 
